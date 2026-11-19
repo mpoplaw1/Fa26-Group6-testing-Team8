@@ -1,12 +1,18 @@
-# Coverage configuration: measure the application modules, not the tests.
 [run]
+source =
+    config
+    data_loader
+    model
+    run
+    example_analysis
+    issue_resolution_analysis
+    contributor_activity_analysis
+    discussion_trends_analysis
 omit =
+    */test_*.py
     tests/*
-    */site-packages/*
 
 [report]
 show_missing = True
-# The example analysis ships with the template and is exercised via feature 0.
 exclude_lines =
-    if __name__ == .__main__.:
     pragma: no cover

@@ -1,0 +1,69 @@
+..F................F....E.F...........
+======================================================================
+ERROR: test_empty_dataset_does_not_crash (test_milestone3.TestExample.test_empty_dataset_does_not_crash)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\indexes\base.py", line 3816, in get_loc
+    return self._engine.get_loc(casted_key)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 172, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 201, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7726, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7734, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'creator'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\test_milestone3.py", line 424, in test_empty_dataset_does_not_crash
+    _, output = self.capture(example_analysis.ExampleAnalysis().run)
+                ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\test_milestone3.py", line 68, in capture
+    result = function(*args)
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\example_analysis.py", line 53, in run
+    df_hist = df.groupby(df["creator"]).value_counts().nlargest(top_n).plot(kind="bar", figsize=(14,8), title=f"Top {top_n} issue creators")
+                         ~~^^^^^^^^^^^
+  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\frame.py", line 4330, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\indexes\base.py", line 3823, in get_loc
+    raise KeyError(key) from err
+KeyError: 'creator'
+
+======================================================================
+FAIL: test_false_default_is_preserved (test_milestone3.TestConfig.test_false_default_is_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\test_milestone3.py", line 257, in test_false_default_is_preserved
+    self.assertIs(config.get_parameter('missing', default=False), False)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None is not False
+
+======================================================================
+FAIL: test_numeric_contributor_name_remains_text (test_milestone3.TestEntryPoint.test_numeric_contributor_name_remains_text)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\test_milestone3.py", line 407, in test_numeric_contributor_name_remains_text
+    self.assertIn('Total events:         1', output)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Total events:         1' not found in '\n=== Feature 2: Contributor Activity Analysis ===\nQuestion: Who are the most active contributors, and what does their activity consist of?\nMethod: Aggregating every event authored by "123" and grouping it by event type.\nFinding: No activity was found for contributor "123".\n'
+
+======================================================================
+FAIL: test_changed_dataset_path_loads_new_dataset (test_milestone3.TestLoader.test_changed_dataset_path_loads_new_dataset)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\test_milestone3.py", line 348, in test_changed_dataset_path_loads_new_dataset
+    self.assertEqual([item.number for item in loaded], [2])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [1] != [2]
+
+First differing element 0:
+1
+2
+
+- [1]
++ [2]
+
+----------------------------------------------------------------------
+Ran 38 tests in 3.571s
+
+FAILED (failures=3, errors=1)

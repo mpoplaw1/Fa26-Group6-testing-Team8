@@ -1,0 +1,12 @@
+Name                               Stmts   Miss  Cover   Missing
+----------------------------------------------------------------
+config.py                             68      4    94%   113-114, 122-123
+contributor_activity_analysis.py     118      1    99%   215
+data_loader.py                        18      1    94%   43
+discussion_trends_analysis.py         98      1    99%   189
+example_analysis.py                   28      1    96%   64
+issue_resolution_analysis.py         110      1    99%   231
+model.py                              67      0   100%
+run.py                                24      0   100%
+----------------------------------------------------------------
+TOTAL                                531      9    98%
