@@ -3,7 +3,7 @@
 ERROR: test_empty_dataset_does_not_crash (test_milestone3.TestExample.test_empty_dataset_does_not_crash)
 ----------------------------------------------------------------------
 Traceback (most recent call last):
-  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\indexes\base.py", line 3816, in get_loc
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\.venv\Lib\site-packages\pandas\core\indexes\base.py", line 3816, in get_loc
     return self._engine.get_loc(casted_key)
            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
   File "pandas/_libs/index.pyx", line 172, in pandas._libs.index.IndexEngine.get_loc
@@ -23,9 +23,9 @@ Traceback (most recent call last):
   File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\example_analysis.py", line 53, in run
     df_hist = df.groupby(df["creator"]).value_counts().nlargest(top_n).plot(kind="bar", figsize=(14,8), title=f"Top {top_n} issue creators")
                          ~~^^^^^^^^^^^
-  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\frame.py", line 4330, in __getitem__
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\.venv\Lib\site-packages\pandas\core\frame.py", line 4330, in __getitem__
     indexer = self.columns.get_loc(key)
-  File "C:\Users\Code4designx\Documents\ChatGPT\ENPM611- Software Engineer\tmp\milestone3-venv\Lib\site-packages\pandas\core\indexes\base.py", line 3823, in get_loc
+  File "H:\ENPM611-0101,SW01 Software Engineering-Fall 2026\milestone3\team-6-testing\.venv\Lib\site-packages\pandas\core\indexes\base.py", line 3823, in get_loc
     raise KeyError(key) from err
 KeyError: 'creator'
 
@@ -64,6 +64,6 @@ First differing element 0:
 + [2]
 
 ----------------------------------------------------------------------
-Ran 38 tests in 3.571s
+Ran 38 tests in 2.491s
 
 FAILED (failures=3, errors=1)
