@@ -4,7 +4,7 @@
 **Source:** https://github.com/bala-umd/project-application-template  
 **Commit:** `c6742444c327c8c780e419c0915998c3f2f152f8`  
 **Test date:** November 22, 2026.  
-**Environment:** Windows, Python 3.13.1. Package versions are in `requirements-testing.txt`.
+**Environment:** macOS, Python 3.9. Package versions are in `requirements-testing.txt`.
 
 The suite ran 62 tests. It recorded 18 failures and four errors, and each one points to a defect in this report. Total statement and branch coverage was 100%. All production modules were included. No production code was changed.
 
