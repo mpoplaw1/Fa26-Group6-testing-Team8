@@ -387,6 +387,82 @@ AssertionError: 2 != 37
 
 **Severity:** Low to medium.
 
+## D13. Bot accounts are counted as contributors and as discussion
+
+**Modules:** `contributor_activity_analysis.py` (`total_events_by_author()`, `_analyze_all_contributors()`), `discussion_trends_analysis.py` (`comments_per_month()`, `_report_timeline()`).  
+**Tests:** `TestRealDataDefects.test_bot_accounts_are_not_ranked_as_contributors`, `TestRealDataDefects.test_bot_comments_do_not_decide_the_busiest_month` (in `test_milestone3_extra.py`).  
+**Impact:** On the real data, Feature 2 names a bot as the most active contributor, and Feature 3 reports a "busiest month" that is mostly automated comments. Both findings are presented as facts about people.
+
+**Found on real data:** In `poetry_issues_all.json`, Feature 2 prints `"github-actions[bot]" is the most active contributor with 9537 events across the project.` Feature 3 reports `busiest month was 2024-03 with 3767 comments`, but 3,451 of those comments (92%) are from `github-actions[bot]`. Without bots, the busiest month is 2022-09 with 920 comments. Details are in `real_dataset_notes.md`.
+
+**Preconditions:**
+
+- Feature 2 test: one issue with three comments by `github-actions[bot]`, two by `alice` and one by `bob`.
+- Feature 3 test: one issue with two comments by people in 2022-09 and three comments by `github-actions[bot]` in 2024-03.
+
+**Steps:**
+
+1. Run `ContributorActivityAnalysis` with no `--user`, and read the finding.
+2. Run `DiscussionTrendsAnalysis`, and read the busiest month.
+
+```text
+python -m unittest test_milestone3_extra.TestRealDataDefects.test_bot_accounts_are_not_ranked_as_contributors
+python -m unittest test_milestone3_extra.TestRealDataDefects.test_bot_comments_do_not_decide_the_busiest_month
+```
+
+**Expected:** Feature 2 names `alice` as the most active contributor. Feature 3 reports 2022-09 as the busiest month.  
+**Actual:** Feature 2 names `github-actions[bot]`. Feature 3 reports 2024-03.
+
+**Failure output:**
+
+```text
+AssertionError: '"alice" is the most active contributor' not found in '... Finding: "github-actions[bot]" is the most active contributor with 3 events across the project. ...'
+```
+
+```text
+AssertionError: 'busiest month was 2022-09' not found in '... Discussion spans 2022-09 to 2024-03; busiest month was 2024-03 with 3 comments. ...'
+```
+
+**Cause:** Both features count every event author the same way. Nothing separates automated accounts from people. Exclude authors whose names end in `[bot]` (or report them separately) before ranking contributors and counting discussion.
+
+**Scope:** The counts themselves are correct. The problem is that the findings describe bot activity as human contribution and discussion.
+
+**Severity:** Medium. The numbers are right, but the printed findings name a bot as the top contributor and report the wrong busiest month on the real data.
+
+## D14. Feature 1 uses later activity as the close date
+
+**Module:** `issue_resolution_analysis.py`, `resolution_days()`.  
+**Test:** `TestRealDataDefects.test_resolution_time_does_not_use_later_activity_as_close_date` (in `test_milestone3_extra.py`).  
+**Impact:** Closed issues without a recorded close date are measured up to their last update, which can be long after they were closed. This makes resolution times look much longer than the data supports.
+
+**Found on real data:** In `poetry_issues_all.json`, 223 closed issues have no dated `closed` event. Feature 1 gives them a median "resolution time" of 1,323.9 days (about 3.6 years). This raises reported medians, for example `kind/feature` from 49.7 days (recorded close dates only) to 71.3 days. In `poetry_issues.json`, 20 issues are affected. Details are in `real_dataset_notes.md`.
+
+**Preconditions:** One closed issue created on 2026-01-01, with one comment and no `closed` event. Its `updated_date` is 2027-01-01.
+
+**Steps:**
+
+1. Call `resolution_days()` on the issue.
+2. Check the result.
+
+```text
+python -m unittest test_milestone3_extra.TestRealDataDefects.test_resolution_time_does_not_use_later_activity_as_close_date
+```
+
+**Expected:** `None`. The issue has no recorded close date, so its resolution time can't be determined.  
+**Actual:** `365.0`. The time up to the last update is reported as the resolution time.
+
+**Failure output:**
+
+```text
+AssertionError: 365.0 is not None
+```
+
+**Cause:** When no dated `closed` event exists, the function falls back to `issue.updated_date`. That date records the last activity on the issue, not when it was closed. Skip these issues (and report how many were skipped) rather than using the last update.
+
+**Scope:** Team 8's README describes this fallback, so it is a known choice. The real data shows that it makes the reported results noticeably longer.
+
+**Severity:** Medium. It affects 223 issues in the full dataset and makes reported resolution times noticeably too long, but it doesn't crash.
+
 ## Limits
 
-These tests establish behavior for controlled inputs. They do not validate every record in the course dataset. Coverage measures executed statements, not correctness. The raw suite output is in `team_6_test_failures.txt`; the raw coverage output is in `team_6_test_coverage.txt`.
+These tests establish behavior for controlled inputs. They do not validate every record in the course dataset, but all three features were also run on `poetry_issues.json` and `poetry_issues_all.json` (see `real_dataset_notes.md`). Coverage measures executed statements and branches, not correctness. The raw suite output is in `team_6_test_failures.txt`; the raw coverage output is in `team_6_test_coverage.txt`.
