@@ -474,6 +474,43 @@ class TestAdditionalDefects(IsolatedCase):
     def test_state_parsing_accepts_title_case(self):
         self.assertEqual(issue(state='Closed').state, State.closed)
 
+    # D9: contributor lookup is case-sensitive.
+    def test_user_lookup_ignores_case(self):
+        items = [issue(creator='Alice', events=[event(author='Alice')])]
+        activity = contributor.user_activity(items, 'alice')
+        self.assertEqual(activity['total_events'], 1)
+
+    # D10: a contributor who only opened issues gets a "none" finding.
+    def test_creator_only_user_gets_a_meaningful_finding(self):
+        os.environ['user'] = 'dave'
+        os.environ['ENPM611_CHART_OUTPUT_DIR'] = str(self.directory / 'charts')
+        items = [issue(creator='dave', events=[])]
+        with patch.object(contributor.DataLoader, 'get_issues', return_value=items):
+            _, output = self.capture(contributor.ContributorActivityAnalysis().run)
+        self.assertIn('Issues opened:        1', output)
+        self.assertNotIn('"none" events', output)
+
+    # D11: an unknown feature number exits with status 0.
+    def test_unknown_feature_exits_with_error_status(self):
+        with patch('sys.argv', ['run.py', '--feature', '99']):
+            try:
+                self.capture(run.main)
+                status = 0
+            except SystemExit as exit_signal:
+                status = exit_signal.code or 0
+        self.assertNotEqual(status, 0)
+
+    # D12: the discussion timeline hides months without comments.
+    def test_timeline_keeps_months_without_comments(self):
+        items = [issue(events=[event('commented', 'bob', '2020-01-15T00:00:00Z'),
+                               event('commented', 'bob', '2023-01-15T00:00:00Z')])]
+        with patch.object(discussion.DataLoader, 'get_issues', return_value=items), \
+                patch.object(discussion.DiscussionTrendsAnalysis, '_finish_chart') as finish:
+            self.capture(discussion.DiscussionTrendsAnalysis().run)
+        figure = finish.call_args[0][0]
+        points = figure.axes[0].lines[0].get_xdata()
+        self.assertEqual(len(points), 37)
+
 
 if __name__ == '__main__':
     unittest.main()
