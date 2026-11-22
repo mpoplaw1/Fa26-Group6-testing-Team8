@@ -463,6 +463,28 @@ AssertionError: 365.0 is not None
 
 **Severity:** Medium. It affects 223 issues in the full dataset and makes reported resolution times noticeably too long, but it doesn't crash.
 
+## Severity summary
+
+High means the app crashes or loses data for a whole run. Medium means a wrong answer or a crash for one specific input. Low means a minor or unlikely problem.
+
+| Defect | Title | Severity | Reason |
+| --- | --- | --- | --- |
+| D1 | Configuration drops a false default | Low | `None` and `False` behave the same in most checks, so few callers would notice. |
+| D2 | Numeric contributor input loses its string type | Medium | A valid user name like `123` silently gets no activity. |
+| D3 | A new dataset path returns the previous dataset | Medium | The app can analyze the wrong file with no warning. |
+| D4 | The example feature crashes on an empty dataset | Low | Only the example feature is affected, and empty datasets are rare. |
+| D5 | Null labels, assignees or events break loading and filtering | High | One bad record can stop the whole dataset from loading. |
+| D6 | Naive and timezone-aware dates cannot be compared | Medium | Feature 1 crashes, but only when date formats are mixed. |
+| D7 | Issues without a valid number are counted as one issue | Low | Only a count is off, and real issues always have numbers. |
+| D8 | Issue state matching is case-sensitive | Low | GitHub always sends lowercase states, so real data isn't affected. |
+| D9 | Contributor lookup is case-sensitive | Medium | Ordinary input gives a wrong answer with no error. |
+| D10 | A creator-only contributor gets a meaningless finding | Low | The report reads oddly, but no numbers are wrong. |
+| D11 | An unknown feature number exits with status 0 | Low | Only scripts that check the exit status are affected. |
+| D12 | The discussion timeline hides months without comments | Low | The chart's spacing misleads, but the counts are correct. |
+| D13 | Bot accounts are counted as contributors and as discussion | Medium | On the real data, the findings name a bot as the top contributor and the wrong busiest month. |
+| D14 | Feature 1 uses later activity as the close date | Medium | 223 issues in the full dataset get resolution times that are too long. |
+
+
 ## Limits
 
 These tests establish behavior for controlled inputs. They do not validate every record in the course dataset, but all three features were also run on `poetry_issues.json` and `poetry_issues_all.json` (see `real_dataset_notes.md`). Coverage measures executed statements and branches, not correctness. The raw suite output is in `team_6_test_failures.txt`; the raw coverage output is in `team_6_test_coverage.txt`.
