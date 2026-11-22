@@ -425,5 +425,55 @@ class TestExample(IsolatedCase):
             self.assertIn('Found 0 events across 0 issues.', output)
 
 
+class TestAdditionalDefects(IsolatedCase):
+    """Defects found by Ashish test pass (D5-D8, plus extra D1/D2 cases).
+
+    Each test asserts the expected contract and fails against the current code.
+    """
+
+    # D2 (extra cases): configuration decodes text that looks like JSON.
+    def test_text_like_user_names_stay_strings(self):
+        for value in ('true', 'null', '1.0'):
+            with self.subTest(value=value):
+                os.environ['user'] = value
+                self.assertEqual(config.get_parameter('user'), value)
+
+    # D1 (extra case): a falsy default other than False is also dropped.
+    def test_zero_default_is_preserved(self):
+        self.assertEqual(config.get_parameter('missing', default=0), 0)
+
+    # D5: null labels, assignees and events in the dataset.
+    def test_null_labels_and_assignees_load_as_empty_lists(self):
+        item = issue(labels=None, assignees=None)
+        self.assertEqual(item.labels, [])
+        self.assertEqual(item.assignees, [])
+
+    def test_null_events_load_as_empty_list(self):
+        self.assertEqual(issue(events=None).events, [])
+
+    def test_label_filter_tolerates_null_labels(self):
+        item = issue(labels=None)
+        self.assertEqual(resolution.collect_resolution_times([item], 'bug'), [])
+
+    # D6: naive and timezone-aware datetimes are mixed in one calculation.
+    def test_resolution_days_handles_mixed_timezone_awareness(self):
+        item = issue(created_date='2026-01-01T00:00:00',
+                     events=[event('closed', date='2026-01-03T00:00:00Z')])
+        self.assertEqual(resolution.resolution_days(item), 2.0)
+
+    # D7: issues with missing or invalid numbers all collapse to -1.
+    def test_issues_without_numbers_are_counted_separately(self):
+        items = [issue(number=None, creator='x', events=[event(author='u')]),
+                 issue(number='n/a', creator='x', events=[event(author='u')])]
+        self.assertEqual(contributor.user_activity(items, 'u')['issues_participated'], 2)
+
+    # D8: the state value is matched case-sensitively.
+    def test_state_parsing_accepts_upper_case(self):
+        self.assertEqual(issue(state='CLOSED').state, State.closed)
+
+    def test_state_parsing_accepts_title_case(self):
+        self.assertEqual(issue(state='Closed').state, State.closed)
+
+
 if __name__ == '__main__':
     unittest.main()
