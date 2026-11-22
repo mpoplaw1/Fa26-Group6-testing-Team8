@@ -7,7 +7,7 @@ coverage is run with branch measurement (``coverage run --branch``):
 * both error-tolerant loops in ``config.overwrite_from_args``,
 * the defensive ``most_discussed is None`` guard in Feature 3.
 
-It also holds two tests for problems found by running the features on the real
+It also holds tests for two problems (D13 and D14) found by running the features on the real
 Poetry datasets (see real_dataset_notes.md). Those tests use small fake data
 that reproduces each problem, and they fail against the current code.
 
@@ -147,6 +147,7 @@ class TestRealDataDefects(IsolatedCase):
         super().setUp()
         os.environ['ENPM611_CHART_OUTPUT_DIR'] = str(self.directory / 'charts')
 
+    # D13: bot accounts are ranked as contributors.
     def test_bot_accounts_are_not_ranked_as_contributors(self):
         # A bot has the most events; alice is the most active person.
         items = [issue(events=[event('commented', 'github-actions[bot]'),
@@ -159,6 +160,7 @@ class TestRealDataDefects(IsolatedCase):
             _, output = self.capture(contributor.ContributorActivityAnalysis().run)
         self.assertIn('"alice" is the most active contributor', output)
 
+    # D13: bot comments decide the busiest month.
     def test_bot_comments_do_not_decide_the_busiest_month(self):
         # People comment most in 2022-09; a bot posts more in 2024-03.
         people = [event('commented', 'alice', '2022-09-10T00:00:00Z'),
@@ -170,6 +172,7 @@ class TestRealDataDefects(IsolatedCase):
             _, output = self.capture(discussion.DiscussionTrendsAnalysis().run)
         self.assertIn('busiest month was 2022-09', output)
 
+    # D14: later activity is used as the close date.
     def test_resolution_time_does_not_use_later_activity_as_close_date(self):
         # Closed issue with no recorded close date; last activity a year later.
         item = issue(created_date='2026-01-01T00:00:00Z',
