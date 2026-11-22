@@ -3,12 +3,12 @@
 **Application:** Group 8 Poetry issue analysis.  
 **Source:** https://github.com/bala-umd/project-application-template  
 **Commit:** `c6742444c327c8c780e419c0915998c3f2f152f8`  
-**Test date:** November 18, 2026.  
+**Test date:** November 22, 2026.  
 **Environment:** Windows, Python 3.13.1. Package versions are in `requirements-testing.txt`.
 
-The suite ran 38 tests. It recorded three failures and one error. Total statement coverage was 98%. All production modules were included. No production code was changed.
+The suite ran 62 tests. It recorded 18 failures and four errors, and each one points to a defect in this report. Total statement and branch coverage was 100%. All production modules were included. No production code was changed.
 
-The four entries below describe separate causes. Findings in template support code are included because that code is part of the assigned application. They are not presented as changes introduced by Group 8.
+The 14 entries below describe separate causes. D1 to D12 were found with small test data. D13 and D14 were found by running the features on `poetry_issues.json` and `poetry_issues_all.json`, then reproduced with small test data. Findings in template support code are included because that code is part of the assigned application. They are not presented as changes introduced by Group 8.
 
 Run each reproduction command from the repository root after installing `requirements-testing.txt`. Each test creates its own data. The full course dataset is not needed.
 
