@@ -7,6 +7,10 @@ coverage is run with branch measurement (``coverage run --branch``):
 * both error-tolerant loops in ``config.overwrite_from_args``,
 * the defensive ``most_discussed is None`` guard in Feature 3.
 
+It also holds two tests for problems found by running the features on the real
+Poetry datasets (see real_dataset_notes.md). Those tests use small fake data
+that reproduces each problem, and they fail against the current code.
+
 They reuse the fixtures and isolation from test_milestone3.py. Every test
 asserts an observable outcome; none of them changes production code.
 """
@@ -21,7 +25,9 @@ import matplotlib
 matplotlib.use('Agg')
 
 import config
+import contributor_activity_analysis as contributor
 import discussion_trends_analysis as discussion
+import issue_resolution_analysis as resolution
 from test_milestone3 import IsolatedCase, event, issue  # shared fixtures
 
 import json
@@ -133,6 +139,43 @@ class TestDiscussionGuard(IsolatedCase):
         self.assertNotIn('Most discussed issue', output)
         self.assertIn('busiest month was 2026-01 with 1 comments', output)
 
+
+class TestRealDataDefects(IsolatedCase):
+    """Problems first seen on the real datasets, reproduced with small fake data."""
+
+    def setUp(self):
+        super().setUp()
+        os.environ['ENPM611_CHART_OUTPUT_DIR'] = str(self.directory / 'charts')
+
+    def test_bot_accounts_are_not_ranked_as_contributors(self):
+        # A bot has the most events; alice is the most active person.
+        items = [issue(events=[event('commented', 'github-actions[bot]'),
+                               event('commented', 'github-actions[bot]'),
+                               event('commented', 'github-actions[bot]'),
+                               event('commented', 'alice'),
+                               event('commented', 'alice'),
+                               event('commented', 'bob')])]
+        with patch.object(contributor.DataLoader, 'get_issues', return_value=items):
+            _, output = self.capture(contributor.ContributorActivityAnalysis().run)
+        self.assertIn('"alice" is the most active contributor', output)
+
+    def test_bot_comments_do_not_decide_the_busiest_month(self):
+        # People comment most in 2022-09; a bot posts more in 2024-03.
+        people = [event('commented', 'alice', '2022-09-10T00:00:00Z'),
+                  event('commented', 'bob', '2022-09-11T00:00:00Z')]
+        bots = [event('commented', 'github-actions[bot]', f'2024-03-0{day}T00:00:00Z')
+                for day in (1, 2, 3)]
+        items = [issue(events=people + bots)]
+        with patch.object(discussion.DataLoader, 'get_issues', return_value=items):
+            _, output = self.capture(discussion.DiscussionTrendsAnalysis().run)
+        self.assertIn('busiest month was 2022-09', output)
+
+    def test_resolution_time_does_not_use_later_activity_as_close_date(self):
+        # Closed issue with no recorded close date; last activity a year later.
+        item = issue(created_date='2026-01-01T00:00:00Z',
+                     updated_date='2027-01-01T00:00:00Z',
+                     events=[event('commented', 'bob', '2026-01-02T00:00:00Z')])
+        self.assertIsNone(resolution.resolution_days(item))
 
 if __name__ == '__main__':
     unittest.main()
