@@ -4,11 +4,13 @@
 **Source:** https://github.com/bala-umd/project-application-template  
 **Commit:** `c6742444c327c8c780e419c0915998c3f2f152f8`  
 **Test date:** November 22, 2026.  
-**Environment:** macOS, Python 3.9. Package versions are in `requirements-testing.txt`.
+**Final verification environment:** Windows, Python 3.13.1. Package versions are in `requirements-testing.txt`. The final raw outputs were captured in the H-drive checkout on November 22, 2026. Mahima's earlier real-data runs used macOS and Python 3.9; those notes are separate evidence.
 
-The suite ran 62 tests. It recorded 18 failures and four errors, and each one points to a defect in this report. Total statement and branch coverage was 100%. All production modules were included. No production code was changed.
+The final suite ran 62 tests. It recorded 14 failures and four errors. Statement and branch coverage were both 100%. All eight production modules were included. Production code was unchanged.
 
-The 14 entries below describe separate causes. D1 to D12 were found with small test data. D13 and D14 were found by running the features on `poetry_issues.json` and `poetry_issues_all.json`, then reproduced with small test data. Findings in template support code are included because that code is part of the assigned application. They are not presented as changes introduced by Group 8.
+Finding IDs are retained to preserve the team's review history. D1-D4 are reproducible functional defects. D5-D8 are conditional robustness findings on nonstandard input. D10-D12 are usability or command-line behavior findings. D9, D13 and D14 describe documented assumptions, not confirmed contract violations. Their tests now verify the documented behavior instead of asserting a new requirement.
+
+Failure counts include subtests and are not a count of distinct defects. Synthetic failures establish the behavior of the supplied inputs; they do not establish that those inputs occur in the course dataset. Findings in retained template code are not attributed to Group 8's changes.
 
 Run each reproduction command from the repository root after installing `requirements-testing.txt`. Each test creates its own data. The full course dataset is not needed.
 
@@ -145,6 +147,8 @@ KeyError: 'creator'
 
 ## D5. Null labels, assignees or events break loading and filtering
 
+**Classification:** Conditional robustness finding. The input is synthetic and its acceptance is not established by the supplied data contract.
+
 **Modules:** `model.py` (`Issue.from_json()`), `issue_resolution_analysis.py` (`collect_resolution_times()`).  
 **Tests:** `TestAdditionalDefects.test_null_labels_and_assignees_load_as_empty_lists`, `test_null_events_load_as_empty_list`, `test_label_filter_tolerates_null_labels`.  
 **Impact:** An issue record with `null` in one of these fields either loads with `None` instead of a list or stops the whole load with a `TypeError`. A label filter then crashes on the `None` labels.
@@ -176,6 +180,8 @@ TypeError: argument of type 'NoneType' is not iterable
 
 ## D6. Naive and timezone-aware dates cannot be compared
 
+**Classification:** Conditional robustness finding. The input is synthetic and its acceptance is not established by the supplied data contract.
+
 **Module:** `issue_resolution_analysis.py`, `resolution_days()`.  
 **Test:** `TestAdditionalDefects.test_resolution_days_handles_mixed_timezone_awareness`.  
 **Impact:** Feature 1 stops with a `TypeError` when a closed issue has a creation date without a timezone and a closing event with one.
@@ -191,7 +197,7 @@ TypeError: argument of type 'NoneType' is not iterable
 python -m unittest test_milestone3.TestAdditionalDefects.test_resolution_days_handles_mixed_timezone_awareness
 ```
 
-**Expected:** `2.0`.  
+**Proposed robustness expectation:** `2.0` if naive timestamps are defined as UTC. That interpretation is an assumption of this test.  
 **Actual:** An exception.
 
 **Failure output:**
@@ -200,11 +206,13 @@ python -m unittest test_milestone3.TestAdditionalDefects.test_resolution_days_ha
 TypeError: can't subtract offset-naive and offset-aware datetimes
 ```
 
-**Cause:** `dateutil.parser.parse` returns a naive datetime for a string without an offset and an aware one for a string with one. The subtraction at `end_date - issue.created_date` does not normalize them. Treat naive values as UTC before subtracting.
+**Cause:** `dateutil.parser.parse` returns a naive datetime for a string without an offset and an aware one for a string with one. The subtraction at `end_date - issue.created_date` does not normalize them. Reject missing timezone information clearly or define an explicit normalization rule before subtracting; a missing timezone cannot safely be assumed without a contract.
 
 **Scope:** The course dataset may use one format throughout. This affects data that mixes the two.
 
 ## D7. Issues without a valid number are counted as one issue
+
+**Classification:** Conditional robustness finding. The input is synthetic and its acceptance is not established by the supplied data contract.
 
 **Modules:** `model.py`, `contributor_activity_analysis.py`, `user_activity()`.  
 **Test:** `TestAdditionalDefects.test_issues_without_numbers_are_counted_separately`.  
@@ -235,6 +243,8 @@ AssertionError: 1 != 2
 
 ## D8. Issue state matching is case-sensitive
 
+**Classification:** Conditional robustness finding. The input is synthetic and its acceptance is not established by the supplied data contract.
+
 **Module:** `model.py`, `Issue.from_json()`.  
 **Tests:** `TestAdditionalDefects.test_state_parsing_accepts_upper_case`, `test_state_parsing_accepts_title_case`.  
 **Impact:** A state of `CLOSED` or `Closed` loads as `None`. Resolution and contributor features then skip the issue silently.
@@ -261,37 +271,20 @@ AssertionError: None != <State.closed: 'closed'>
 
 **Cause:** `State[state_value]` is an exact-name enum lookup, and unknown names are swallowed by `except KeyError`. Lower-case the value before the lookup.
 
-**Scope:** This is an assumption about the data format. The provided dataset likely uses lower-case values, so this is a robustness defect.
+**Scope:** This is an assumption about the data format. The provided dataset likely uses lower-case values, so this is a conditional robustness finding, not evidence of failure on valid course records.
 
-## D9. Contributor lookup is case-sensitive
+## D9. Exact contributor matching (documented assumption)
 
-**Module:** `contributor_activity_analysis.py`, `user_activity()`.  
-**Test:** `TestAdditionalDefects.test_user_lookup_ignores_case`.  
-**Impact:** `--user alice` reports no activity for a contributor stored as `Alice`. The answer is silently wrong for ordinary input.
+**Module:** `contributor_activity_analysis.py`, `user_activity()`.
+**Status:** Enhancement candidate. Not a confirmed defect against the supplied README.
 
-**Preconditions:** One issue is created by `Alice`. It contains one event authored by `Alice`.
-
-**Steps:**
-
-1. Call `user_activity(issues, 'alice')`.
-2. Check `total_events`.
+The README identifies contributors by exact author strings. A fixture with author `Alice` therefore returns zero events for `alice` and one for `Alice`. Case-insensitive lookup could improve usability, but it changes the documented contract.
 
 ```text
-python -m unittest test_milestone3.TestAdditionalDefects.test_user_lookup_ignores_case
+python -m unittest test_milestone3.TestAdditionalDefects.test_user_lookup_uses_documented_exact_strings
 ```
 
-**Expected:** `1`. GitHub logins are case-insensitive, so `alice` and `Alice` are the same account.  
-**Actual:** `0`. The command-line run prints `Finding: No activity was found for contributor "alice".`
-
-**Failure output:**
-
-```text
-AssertionError: 0 != 1
-```
-
-**Cause:** The function compares `issue.creator == user` and `event.author == user` as exact strings. Compare case-insensitively, for example with `casefold()`.
-
-**Severity:** Medium. The input is common, and the result is wrong without any error.
+**Expected and actual:** Zero events for `alice`; one for `Alice`. The test passes.
 
 ## D10. A creator-only contributor gets a meaningless finding
 
@@ -387,87 +380,41 @@ AssertionError: 2 != 37
 
 **Severity:** Low to medium.
 
-## D13. Bot accounts are counted as contributors and as discussion
+## D13. Bot activity is included (documented assumption)
 
-**Modules:** `contributor_activity_analysis.py` (`total_events_by_author()`, `_analyze_all_contributors()`), `discussion_trends_analysis.py` (`comments_per_month()`, `_report_timeline()`).  
-**Tests:** `TestRealDataDefects.test_bot_accounts_are_not_ranked_as_contributors`, `TestRealDataDefects.test_bot_comments_do_not_decide_the_busiest_month` (in `test_milestone3_extra.py`).  
-**Impact:** On the real data, Feature 2 names a bot as the most active contributor, and Feature 3 reports a "busiest month" that is mostly automated comments. Both findings are presented as facts about people.
+**Modules:** `contributor_activity_analysis.py`, `discussion_trends_analysis.py`.
+**Status:** Interpretation limitation. Not a confirmed contract violation.
 
-**Found on real data:** In `poetry_issues_all.json`, Feature 2 prints `"github-actions[bot]" is the most active contributor with 9537 events across the project.` Feature 3 reports `busiest month was 2024-03 with 3767 comments`, but 3,451 of those comments (92%) are from `github-actions[bot]`. Without bots, the busiest month is 2022-09 with 920 comments. Details are in `real_dataset_notes.md`.
-
-**Preconditions:**
-
-- Feature 2 test: one issue with three comments by `github-actions[bot]`, two by `alice` and one by `bob`.
-- Feature 3 test: one issue with two comments by people in 2022-09 and three comments by `github-actions[bot]` in 2024-03.
-
-**Steps:**
-
-1. Run `ContributorActivityAnalysis` with no `--user`, and read the finding.
-2. Run `DiscussionTrendsAnalysis`, and read the busiest month.
+The README explicitly includes bot accounts. In the synthetic ranking fixture, `github-actions[bot]` has three events and is ranked first. In the monthly fixture, March 2024 has three bot comments and is the busiest month. Both results match the documented all-account counts.
 
 ```text
-python -m unittest test_milestone3_extra.TestRealDataDefects.test_bot_accounts_are_not_ranked_as_contributors
-python -m unittest test_milestone3_extra.TestRealDataDefects.test_bot_comments_do_not_decide_the_busiest_month
+python -m unittest test_milestone3_extra.TestDocumentedAssumptions.test_bot_accounts_are_included_as_documented test_milestone3_extra.TestDocumentedAssumptions.test_bot_comments_are_included_in_monthly_totals
 ```
 
-**Expected:** Feature 2 names `alice` as the most active contributor. Feature 3 reports 2022-09 as the busiest month.  
-**Actual:** Feature 2 names `github-actions[bot]`. Feature 3 reports 2024-03.
+**Expected and actual:** The bot ranks first; March 2024 has three comments. Both tests pass.
 
-**Failure output:**
+Mahima's real-data notes report 9,537 events for the top bot and 3,451 bot comments out of 3,767 comments in March 2024. These are teammate-recorded observations, not independently rerun during final verification. Human-only analysis would be a useful separate mode. The current output does not establish human-only activity.
+
+## D14. Updated-date fallback (documented limitation)
+
+**Module:** `issue_resolution_analysis.py`, `resolution_days()`.
+**Status:** Known approximation. Not a confirmed contract violation.
+
+The README uses `updated_date` when no dated close event exists. A synthetic issue created January 1, 2026 and updated January 1, 2027 therefore returns 365.0 days. This verifies the fallback; it does not establish the actual resolution time.
 
 ```text
-AssertionError: '"alice" is the most active contributor' not found in '... Finding: "github-actions[bot]" is the most active contributor with 3 events across the project. ...'
+python -m unittest test_milestone3_extra.TestDocumentedAssumptions.test_resolution_time_uses_documented_updated_date_fallback
 ```
 
-```text
-AssertionError: 'busiest month was 2022-09' not found in '... Discussion spans 2022-09 to 2024-03; busiest month was 2024-03 with 3 comments. ...'
-```
+**Expected and actual:** 365.0 days. The test passes.
 
-**Cause:** Both features count every event author the same way. Nothing separates automated accounts from people. Exclude authors whose names end in `[bot]` (or report them separately) before ranking contributors and counting discussion.
-
-**Scope:** The counts themselves are correct. The problem is that the findings describe bot activity as human contribution and discussion.
-
-**Severity:** Medium. The numbers are right, but the printed findings name a bot as the top contributor and report the wrong busiest month on the real data.
-
-## D14. Feature 1 uses later activity as the close date
-
-**Module:** `issue_resolution_analysis.py`, `resolution_days()`.  
-**Test:** `TestRealDataDefects.test_resolution_time_does_not_use_later_activity_as_close_date` (in `test_milestone3_extra.py`).  
-**Impact:** Closed issues without a recorded close date are measured up to their last update, which can be long after they were closed. This makes resolution times look much longer than the data supports.
-
-**Found on real data:** In `poetry_issues_all.json`, 223 closed issues have no dated `closed` event. Feature 1 gives them a median "resolution time" of 1,323.9 days (about 3.6 years). This raises reported medians, for example `kind/feature` from 49.7 days (recorded close dates only) to 71.3 days. In `poetry_issues.json`, 20 issues are affected. Details are in `real_dataset_notes.md`.
-
-**Preconditions:** One closed issue created on 2026-01-01, with one comment and no `closed` event. Its `updated_date` is 2027-01-01.
-
-**Steps:**
-
-1. Call `resolution_days()` on the issue.
-2. Check the result.
-
-```text
-python -m unittest test_milestone3_extra.TestRealDataDefects.test_resolution_time_does_not_use_later_activity_as_close_date
-```
-
-**Expected:** `None`. The issue has no recorded close date, so its resolution time can't be determined.  
-**Actual:** `365.0`. The time up to the last update is reported as the resolution time.
-
-**Failure output:**
-
-```text
-AssertionError: 365.0 is not None
-```
-
-**Cause:** When no dated `closed` event exists, the function falls back to `issue.updated_date`. That date records the last activity on the issue, not when it was closed. Skip these issues (and report how many were skipped) rather than using the last update.
-
-**Scope:** Team 8's README describes this fallback, so it is a known choice. The real data shows that it makes the reported results noticeably longer.
-
-**Severity:** Medium. It affects 223 issues in the full dataset and makes reported resolution times noticeably too long, but it doesn't crash.
+Mahima's notes report 223 full-dataset issues without dated close events and different medians when those records are excluded. The comparison demonstrates sensitivity to the approximation. It does not prove the true close dates or the size of each error. Reporting estimated values separately would improve interpretation.
 
 ## Severity summary
 
 High means the app crashes or loses data for a whole run. Medium means a wrong answer or a crash for one specific input. Low means a minor or unlikely problem.
 
-| Defect | Title | Severity | Reason |
+| Finding | Title | Severity / status | Reason |
 | --- | --- | --- | --- |
 | D1 | Configuration drops a false default | Low | `None` and `False` behave the same in most checks, so few callers would notice. |
 | D2 | Numeric contributor input loses its string type | Medium | A valid user name like `123` silently gets no activity. |
@@ -477,14 +424,14 @@ High means the app crashes or loses data for a whole run. Medium means a wrong a
 | D6 | Naive and timezone-aware dates cannot be compared | Medium | Feature 1 crashes, but only when date formats are mixed. |
 | D7 | Issues without a valid number are counted as one issue | Low | Only a count is off, and real issues always have numbers. |
 | D8 | Issue state matching is case-sensitive | Low | GitHub always sends lowercase states, so real data isn't affected. |
-| D9 | Contributor lookup is case-sensitive | Medium | Ordinary input gives a wrong answer with no error. |
+| D9 | Exact contributor matching | Enhancement | Matches the README; case-insensitive lookup would change the contract. |
 | D10 | A creator-only contributor gets a meaningless finding | Low | The report reads oddly, but no numbers are wrong. |
 | D11 | An unknown feature number exits with status 0 | Low | Only scripts that check the exit status are affected. |
 | D12 | The discussion timeline hides months without comments | Low | The chart's spacing misleads, but the counts are correct. |
-| D13 | Bot accounts are counted as contributors and as discussion | Medium | On the real data, the findings name a bot as the top contributor and the wrong busiest month. |
-| D14 | Feature 1 uses later activity as the close date | Medium | 223 issues in the full dataset get resolution times that are too long. |
+| D13 | Bot activity included | Documented assumption | All-account activity must not be interpreted as human-only activity. |
+| D14 | Updated-date fallback | Documented limitation | Estimates may differ from actual close dates, which are unknown. |
 
 
 ## Limits
 
-These tests establish behavior for controlled inputs. They do not validate every record in the course dataset, but all three features were also run on `poetry_issues.json` and `poetry_issues_all.json` (see `real_dataset_notes.md`). Coverage measures executed statements and branches, not correctness. The raw suite output is in `team_6_test_failures.txt`; the raw coverage output is in `team_6_test_coverage.txt`.
+These tests establish behavior for controlled inputs. They do not validate every record in the course dataset, and Mahima separately recorded runs of all three features on `poetry_issues.json` and `poetry_issues_all.json` (see `real_dataset_notes.md`). Coverage measures executed statements and branches, not correctness. The raw suite output is in `team_6_test_failures.txt`; the raw coverage output is in `team_6_test_coverage.txt`.

@@ -1,5 +1,7 @@
 # Real dataset notes
 
+**Evidence scope:** These are Mahima's November 22 real-data run notes. The final Windows verification reran the synthetic suite only. D13 and D14 are retained as interpretation limitations: bot inclusion and the updated-date fallback are documented by Team 8. Comparisons below do not establish human-only requirements or unknown true close dates.
+
 Our unit tests use small, made-up issue records. I also wanted to see how Team 8's app behaves on the actual Poetry data, the way a normal user would run it. So I ran all three features on both datasets we were given and checked whether the results made sense.
 
 ## How I ran it

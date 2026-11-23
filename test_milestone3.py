@@ -474,11 +474,12 @@ class TestAdditionalDefects(IsolatedCase):
     def test_state_parsing_accepts_title_case(self):
         self.assertEqual(issue(state='Closed').state, State.closed)
 
-    # D9: contributor lookup is case-sensitive.
-    def test_user_lookup_ignores_case(self):
+    # D9 observation: the README specifies exact author strings.
+    def test_user_lookup_uses_documented_exact_strings(self):
         items = [issue(creator='Alice', events=[event(author='Alice')])]
         activity = contributor.user_activity(items, 'alice')
-        self.assertEqual(activity['total_events'], 1)
+        self.assertEqual(activity['total_events'], 0)
+        self.assertEqual(contributor.user_activity(items, 'Alice')['total_events'], 1)
 
     # D10: a contributor who only opened issues gets a "none" finding.
     def test_creator_only_user_gets_a_meaningful_finding(self):

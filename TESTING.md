@@ -20,11 +20,11 @@ python -m coverage run -m unittest discover
 python -m coverage report --omit="*/test_*.py,tests/*"
 ```
 
-Run both commands from the repository root. The test command exits with status 1 because four tests expose defects. Run the coverage command even after that exit. Do not join these commands with `&&`.
+Run both commands from the repository root. The test command exits with status 1 because defect and conditional robustness checks fail. Run the coverage command even after that exit. Do not join these commands with `&&`.
 
-Expected result: 38 tests, 3 failures, 1 error. Statement coverage is 98%: 522 of 531 statements executed.
+Final Windows result: 62 tests, 14 failures, 4 errors. Statement coverage is 100% (531 of 531 statements). Branch coverage is 100% (142 of 142 branches). Failure counts include subtests.
 
-`test_milestone3.py` contains the complete milestone suite. It uses `unittest.TestCase`, assertions, and isolated fixtures. The original pytest files remain in `tests/`. They are retained as source material and are not part of the unittest run. Do not use their results as this milestone's evidence.
+`test_milestone3.py` and `test_milestone3_extra.py` contain the milestone suite. It uses `unittest.TestCase`, assertions, and isolated fixtures. The original pytest files remain in `tests/`. They are retained as source material and are not part of the unittest run. Do not use their results as this milestone's evidence.
 
 ## Test design
 
@@ -49,11 +49,11 @@ Configuration and loader state are restored after each test. Fixtures use synthe
 
 `.coveragerc` names all eight production modules. It excludes test files. Direct-execution statements remain in the denominator. The report does not hide production code to raise coverage.
 
-The nine uncovered statements are five direct-module launch statements and four compatibility or exception-handling statements in `config.py`.
+Direct-module launch tests, configuration compatibility tests and a defensive report test cover the previously unexecuted paths. Every production statement and branch executed in the final run.
 
 The two text reports contain raw command output. No lines were rewritten. Runtime duration and absolute traceback paths can differ on another machine.
 
-Four distinct defects are documented in `team_6_defect_report.md`. Failing tests assert the expected behavior. They are not skipped or marked as expected failures. Several findings affect support code shipped with the template. The report does not attribute their introduction to Group 8.
+Functional defects, conditional robustness findings and documented limitations are distinguished in `team_6_defect_report.md`. Failing tests assert expected or explicitly proposed robustness behavior. D9, D13 and D14 tests assert the README contract and pass. No production fix was introduced to achieve this result. They are not skipped or marked as expected failures. Several findings affect support code shipped with the template. The report does not attribute their introduction to Group 8.
 
 ## Submission
 
