@@ -1,0 +1,12 @@
+Name                               Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------------------------
+config.py                             68      0     30      0   100%
+contributor_activity_analysis.py     118      0     38      0   100%
+data_loader.py                        18      0      4      0   100%
+discussion_trends_analysis.py         98      0     26      0   100%
+example_analysis.py                   28      0      6      0   100%
+issue_resolution_analysis.py         110      0     30      0   100%
+model.py                              67      0      4      0   100%
+run.py                                24      0      4      0   100%
+------------------------------------------------------------------------------
+TOTAL                                531      0    142      0   100%
